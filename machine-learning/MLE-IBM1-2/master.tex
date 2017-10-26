@@ -1,0 +1,43 @@
+\documentclass[11pt]{article}
+\usepackage{geometry}                % See geometry.pdf to learn the layout options. There are lots.
+\geometry{letterpaper}                   % ... or a4paper or a5paper or ... 
+%\geometry{landscape}                % Activate for for rotated page geometry
+%\usepackage[parfill]{parskip}    % Activate to begin paragraphs with an empty line rather than an indent
+\usepackage{graphicx}
+\usepackage{latexsym}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{epstopdf}
+\usepackage{natbib}
+\usepackage{xspace}
+\usepackage{xcolor}
+\usepackage{verbatim}
+
+
+% Helper commands
+\newcommand{\req}[1]{Equation (\ref{eq:#1})}
+\newcommand{\angbrack}[1]{\ensuremath{\left\langle #1 \right\rangle}}
+\DeclareMathOperator*{\argmax}{arg\,max}
+\newcommand{\partiald}[2]{\ensuremath{\frac{\partial\ensuremath{#1}}{\partial \ensuremath{#2}}}}
+\newcommand{\sidepartial}[2]{\ensuremath{\frac{\partial}{\partial \ensuremath{#2}}\ensuremath{#1}}}
+\newcommand{\expec}[2]{\ensuremath{\angbrack{\ensuremath{#1}}_{\ensuremath{#2}}}}
+\newcommand{\sideder}[2]{\ensuremath{\frac{\text{d}}{\text{d} \ensuremath{#2}}\ensuremath{#1}}}
+
+
+\title{Maximum Likelihood Estimation for IBM 1 and 2}
+\author{Wilker Aziz}
+\date{}                                           % Activate to display a given date or no date
+
+\begin{document}
+\maketitle
+%\section{}
+%\subsection{}
+
+
+\input{IBM}
+
+\bibliographystyle{apalike}
+
+\bibliography{IBM.bib}
+
+\end{document}  

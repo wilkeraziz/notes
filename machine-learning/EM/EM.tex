@@ -1,0 +1,194 @@
+
+Consider a collection of (discrete) observations $\mathcal D = \{\xt{1}, \ldots, \xt{|\mathcal D|}\}$.
+Suppose a model of the observations is expressed in terms of a (discrete) hidden variable $z$ where all dependencies between observed and hidden variables are expressed by parameters $\theta$.\footnote{Note that $x$ and $z$ may well themselves be collections of observed/hidden variables, e.g., $x = (x_1, \ldots, x_m)$ and $z = (z_1, \ldots, z_n)$.}
+
+\begin{equation}\label{eq:incomplete-data-likelihood}
+	P(\mathcal D|\theta) = \prod_{s=1}^{|\mathcal D|} \underbrace{P(\xt{s}|\theta)}_{\text{incomplete-data likelihood}} = \prod_{s=1}^{|\mathcal D|} \sum_{\zt{s}} \underbrace{P(\xt{s}, \zt{s}|\theta)}_{\text{complete-data likelihood}}
+\end{equation}
+
+In maximum likelihood learning, we seek to find parameters $\theta_{\text{ML}}$ that maximise the incomplete-data likelihood, or equivalently, its logarithm (since $\log$ is a monotone function),
+\begin{equation}\label{eq:log-likelihood}
+	\mathcal L(\theta|\mathcal D) \equiv \log P(\mathcal D|\theta) = \sum_{s=1}^{|\mathcal D|} \log P(\xt{s}|\theta) = \sum_{s=1}^{|\mathcal D|} \log \left( \sum_{\zt{s}} P(\xt{s}, \zt{s}|\theta) \right)
+\end{equation}
+\noindent thus
+\begin{equation}\label{eq:MLE}
+	\theta_{\text{ML}} \equiv \argmax_\theta \mathcal L(\theta|\mathcal D) ~ .
+\end{equation}
+To avoid clutter, we sometimes derive steps using the contribution $\mathcal \mathcal L_x(\theta)$ to \req{log-likelihood} of a single sample $x$, that is
+
+\begin{equation}
+	\mathcal L(\theta|\mathcal D) \equiv \sum_{x \in \mathcal D} \mathcal L_x(\theta) ~ .
+\end{equation}
+
+In practice, the marginalisation required to express the incomplete-data likelihood may be intractable. We can simplify the problem by introducing auxiliary distributions over hidden variables, i.e. $Q_x(z) \equiv Q(z|x, \psi)$ for all $x \in \mathcal D$.
+It turns out that, for as long as the support of these distributions include the support of the true posterior $P(z|x, \theta)$, any distribution will do.
+
+\begin{subequations}\label{eq:F}
+\begin{align}
+	\mathcal L(\theta|\mathcal D) &= \sum_{x \in \mathcal D} \log  \sum_z P(x, z|\theta)  \\
+		&= \sum_{x \in \mathcal D} \log  \sum_z Q_x(z) \frac{P(x, z|\theta)}{Q_x(z)}  \\
+		&\ge \sum_{x \in \mathcal D} \sum_z Q_x(z) \log \frac{P(x, z|\theta)}{Q_x(z)} \label{eq:JS}\\
+		&= \sum_{x \in \mathcal D} \left( \sum_z  Q_x(z) \log P(x, z|\theta) - \sum_z Q_x(z) \log Q_x(z) \right)\\
+		&= \sum_{x \in \mathcal D} \left(\mathbb E_{Q_x(Z)}[\log P(x, z|\theta)] + H(Q_x) \right)\\
+		&\equiv \sum_{x \in \mathcal D} \mathcal F_x(Q_x, \theta)\\
+		&\equiv \mathcal  F(Q, \theta | \mathcal D) 
+\end{align}
+\end{subequations}
+
+In \req{JS}, we make use of Jensen's inequality to obtain a lowerbound on the log-likelihood. Note that the lowerbound is a function of the parameters of the generative model $\theta$ and of the auxiliary distributions $\{Q_x: \forall x \in \mathcal D\}$.
+
+\section{EM}
+
+Expectation-Maximisation (EM) \citep{Dempster+77:EM} can be viewed as a coordinate ascent algorithm that iteratively optimises $\mathcal F(Q, \theta|\mathcal D)$ \citep{Neal+1998:EM}.
+In the E-step, EM maximises $\mathcal F(Q, \theta|\mathcal D)$ with respect to $Q$   holding $\theta$ fixed.
+In the M-step, EM maximises $\mathcal F(Q, \theta|\mathcal D)$ with respect to $\theta$  holding $Q$ fixed.
+
+\begin{description}
+	\item[E-step] \begin{equation} \label{eq:E} Q^{(t+1)} = \argmax_{Q} \mathcal F(Q, \theta^{(t)} | \mathcal D) \end{equation}
+	\item[M-step] \begin{equation} \label{eq:M} \theta^{(t+1)} = \argmax_{\theta} \mathcal F(Q^{(t+1)}, \theta | \mathcal D) \end{equation}
+\end{description}
+
+The E-step attains an exact solution,
+\begin{equation}\label{eq:E-solution}
+	Q(z|x, \psi) = P(z|x, \theta^{(t)}), \quad{} \forall x \in \mathcal D
+\end{equation}
+\noindent at which the bound $\mathcal F$ is tight (proof sketch: substitute \req{E-solution} into \req{F} and show that the bound becomes an equality).
+
+The M-step can be achieved simply by setting derivatives of \req{M} with respect to $\theta$ to zero and solving for $\theta$.
+
+Because the bound is tight, at the beginning of each M-step we have that $\mathcal F(Q, \theta | \mathcal D) = \mathcal L(\theta|\mathcal D)$. 
+Since the M-step climbs $\mathcal L(\theta|\mathcal D)$, the likelihood is guaranteed not to decrease after each combined EM step.
+
+
+\subsection{M-step in detail}
+
+
+Note that solutions to the M-step must define valid probability distributions, i.e. the optimisation problem is constrained.
+
+\begin{equation}
+\begin{aligned}
+	\theta^{(t+1)} =& \argmax_\theta & & \mathcal F(Q, \theta | \mathcal D) \\
+	&\text{where } & & P(x, z|\theta) = \theta_{z, x} \\
+	&\text{s.t.} & & \sum_{z \in \mathcal Z} \sum_{x \in \mathcal X} P(x, z|\theta) = 1\\
+	& & & 0 \leq P(x, z|\theta) \leq 1, \quad{} (z, x) \in \mathcal Z \times \mathcal X \\
+\end{aligned}
+\end{equation}
+
+
+
+We can approach this constrained optimisation by introducing a Lagrangian multiplier $\lambda \in \mathbb R$ and solving the following unconstrained problem (for simplicity we work with a single data sample).
+
+\begin{equation}
+\begin{aligned}	
+	& \argmax_{\theta, \lambda}  \quad{} \mathcal F(Q^{(t+1)}, \theta|\mathcal D) - \lambda \left(\sum_{z,x} 
+	\theta_{z, x} - 1\right)  \\
+	&\equiv \argmax_{\theta, \lambda} \quad{} h(\theta, \lambda)
+\end{aligned}
+\end{equation}
+
+First, set partial derivatives with respect to $\theta_{z,x}$ to zero (here I use a simple data sample $x$ to avoid cluter),
+\begin{subequations}
+\begin{align}
+	\partiald{h(\theta, \lambda)}{\theta_{z,x}} &= \partiald{}{\theta_{z,x}} \sum_{z'} Q_x(z') \log P(x, z'|\theta)  - \lambda \sum_{z', x'} \partiald{}{\theta_{z,x}} \theta_{z', x'} \\
+	 &= \sum_{z'} Q_x(z') \partiald{}{\theta_{z,x}} \log \theta_{z', x} - \lambda \sum_{z', x'} \mathds 1_{z,x}(z',x')  \\
+	 &= \sum_{z'} Q_x(z') \frac{1}{\theta_{z,x}} \mathds 1_{z}(z') - \lambda \sum_{z', x'} \mathds 1_{z,x}(z',x')  \\
+	 &= \frac{Q_x(z)}{\theta_{z, x}} - \lambda = 0~ ,
+\end{align}
+\end{subequations}
+\noindent which implies 
+\begin{align}
+	\lambda = \frac{Q_x(z)}{\theta_{z, x}}  \quad{} \text{and} \quad{} \theta_{z, x} = \frac{Q_x(z)}{\lambda} ~ . \label{eq:theta_lambda}
+\end{align}
+Then, set partial derivatives with respect to $\lambda$ to zero,
+\begin{align}
+	\partiald{h(\theta, \lambda)}{\lambda} 
+	   &= 0 - \sum_{z, x} \theta_{z, x} -1 = 0 ~, 
+\end{align}
+\noindent which implies
+\begin{equation}
+	 \sum_{z, x} \theta_{z, x} = \sum_{z, x} \frac{Q_x(z)}{\lambda} = 1 \quad{} \text{and} \quad{} \lambda = \sum_{z, x} Q_x(z) ~. \label{eq:lambda_Q}
+\end{equation}
+\noindent Finally, together, Equations (\ref{eq:theta_lambda}) and (\ref{eq:lambda_Q}) imply that,
+\begin{equation}
+	\theta_{z, x} = \frac{Q_x(z)}{\sum_{z', x'} Q_{x'}(z')}
+\end{equation}
+
+Obviously, this solution is only viable for models where the true posterior $P(z|x, \theta)$ can be computed efficiently, which happens when the marginalisation in \req{incomplete-data-likelihood} is tractable.
+
+\section{Categorical distributions}
+
+Suppose the joint distribution $P(x, z|\theta)$ factors as a product of conditionally independent categorical distributions.
+\begin{equation}
+	P(x, z|\theta) = \prod_{t=1}^k \prod_{c, o} \theta_{t,c,o}^{\#(t:c \rightarrow o|x, z)} ~,
+\end{equation}
+where $t \in \{1, \ldots, k\}$ indexes one of $k$ factors (here conditional distributions), $c \in \mathcal C$ indexes conditions, $o \in \mathcal O$ indexes outcomes, and  $\#(t:c \rightarrow o|x, z)$ indicates how many times the event $(c, o)$ of type $t$ is observed in $(x, z)$.
+
+It is not too difficult to see that the solution to the M-step is
+\begin{equation}
+	\theta_{t, c, o} = \frac{\mathbb E_{Q}[\#(t: c\rightarrow o|X,Z)]}{\sum_{o'} \mathbb E_{Q}[\#(t: c\rightarrow o'|X,Z)]} ~.
+\end{equation}
+The key is to have more Lagrangian multipliers (one per categorical distribution) in the relaxed problem.
+\begin{equation}
+\argmax_{\theta, \lambda} \mathcal F(Q^{(t+1)}, \theta|\mathcal D) - \sum_{t, c} \lambda_{t,c} \left( \sum_{o} \theta_{t,c,o} - 1 \right)
+\end{equation}
+Also note that when taking partial derivatives with respect to a parameter $\theta_{t,c,o}$ the following identities hold.
+\begin{subequations}
+\begin{align}
+	\partiald{}{\theta_{t,c,o}} \mathbb E_Q[\log P(X, Z|\theta)] 	
+	&= \partiald{}{\theta_{t,c,o}} \mathbb E_Q\left[\sum_{t'}\sum_{c',o'} \log \theta_{t',c',o'}^{\#(t':c'\rightarrow o' |X, Z)}\right] \\
+	&= \partiald{}{\theta_{t,c,o}} \mathbb E_Q\left[\sum_{t'}\sum_{c',o'} \#(t':c'\rightarrow o' |X, Z) \log \theta_{t',c',o'}\right] \\
+	&= \mathbb E_Q\left[\sum_{t'}\sum_{c',o'} \#(t':c'\rightarrow o' |X, Z) \partiald{}{\theta_{t',c',o'}} \log \theta_{t',c',o'}\right] \\
+	&= \mathbb E_Q\left[\frac{1}{\theta_{t,c,o}} \#(t:c\rightarrow o |X, Z) \right] \\
+	&= \frac{ 1}{\theta_{t,c,o}} E_Q\left[\#(t:c\rightarrow o |X, Z)\right]
+\end{align}
+\end{subequations}
+
+The complete proof is left as exercise.
+
+
+\section{Logistic distributions}
+
+Suppose that for some factor $t$, the conditional distribution $P_t(O|C=c)$ is a logistic distribution
+\begin{equation}\label{eq:logistic}
+	P_t(O=o|C=c, w) = \frac{\exp(w^\top g(c, o))}{\sum_{o' \in \mathcal O} \exp(w^\top g(c, o))} ~,
+\end{equation}
+where $w \in \mathbb R^d$ is a vector of real-valued weights and $g: \mathcal C \times \mathcal O \rightarrow \mathbb R^d$ is a feature function.
+
+In this case the solution to the M-step is simpler, since the optimisation problem is unconstrained in $w$ (proof sketch: \req{logistic} is a valid probability distribution for all $w \in \mathbb R^d$).
+We can approach the problem in \req{M} by setting partial derivatives with respect to $w_j$ to zero (without the need for Lagrangian multipliers).
+
+To make the derivation simpler, let us make a change of variable,
+\begin{equation}
+	\theta_{t, c,o}(w) \equiv \frac{\exp(w^\top g(c, o))}{\sum_{o' \in \mathcal O} \exp(w^\top g(c, o))} ~,
+\end{equation}
+where $\theta_{t}(w)$ can be seen as a function from $\mathcal C \times \mathcal O$ to $\mathbb R$, and $P_t(O=o|C=c, \theta_t(w)) \equiv \theta_{t,c,o}(w)$.
+We can obtain partial derivatives with respect to $w_j$ via the chain rule for derivatives, i.e. $\partiald{}{w_j}P_t(o|c, \theta_t(w)) = \partiald{}{\theta}P_t(o|c, \theta_t(w))\times \partiald{}{w_j}\theta_{t,c,o}(w)$.
+
+\begin{subequations}
+\begin{align}
+	&\partiald{}{w_j} \mathbb E_Q[\log P_t(X, Z|\theta_t(w))] 	\\
+	&= \partiald{}{w_j} \mathbb E_Q\left[\sum_{t'}\sum_{c',o'} \log \theta_{t',c',o'}(w)^{\#(t':c'\rightarrow o' |X, Z)}\right] \\
+	&= \partiald{}{w_j} \mathbb E_Q\left[\sum_{t'}\sum_{c',o'} \#(t':c'\rightarrow o' |X, Z) \log \theta_{t',c',o'}(w)\right] \\
+	&= \mathbb E_Q\left[\sum_{t'}\sum_{c',o'} \#(t':c'\rightarrow o' |X, Z) \partiald{}{w_j} \log \theta_{t',c',o'}(w)\right] \\
+	&= \mathbb E_Q\left[\#(t:c\rightarrow o |X, Z) \partiald{}{w_j} \left( \log \exp (w^\top g(c, o)) - \log \sum_{o'} \exp(w^\top g(c, o')) \right) \right] \\
+	&= \mathbb E_Q\left[\#(t:c\rightarrow o |X, Z) \partiald{}{w_j} \left( w^\top g(c, o) - \log \sum_{o'} \exp(w^\top g(c, o')) \right) \right] \\
+	&= \mathbb E_Q\left[\#(t:c\rightarrow o |X, Z)  \left( g_j(c, o) - \frac{ \partiald{}{w_j}\sum_{o'}\exp(w^\top g(c, o'))}{\sum_{o'} \exp(w^\top g(c, o'))}  \right) \right] \\
+	&= \mathbb E_Q\left[\#(t:c\rightarrow o |X, Z)  \left( g_j(c, o) - \frac{\sum_{o'} \exp(w^\top g(c, o'))g_j(c, o')}{\sum_{o'} \exp(w^\top g(c, o'))}  \right) \right] \\
+	&= \mathbb E_Q\left[\#(t:c\rightarrow o |X, Z)  \left( g_j(c, o) - \sum_{o'} \theta_{t,c,o'}(w) g_j(c, o') \right) \right] \\
+	&= \left(g_j(c, o) - \sum_{o'} \theta_{t,c,o'}(w) g_j(c, o') \right) E_Q\left[\#(t:c\rightarrow o |X, Z)\right]
+\end{align}
+\end{subequations}
+
+Finally, for small enough $\gamma$, the update
+\begin{equation}
+	\theta^{(t+1)}_{t,c,o} = \theta^{(t)}_{t,c,o} + \gamma \partiald{}{w_j} \mathbb E_Q[\log P_t(X, Z|\theta_t(w))] ~
+\end{equation}
+is guaranteed not to the decrease the log-likelihood.
+
+\section{Remarks}
+
+\begin{itemize}
+	\item \citet{Neal+1998:EM} present EM as a coordinate ascent;
+	\item \citet{Salakhutdinov+2003:ECG} present Expectation-Conjugate-Gradient (ECG), a gradient-based algorithm for direct likelihood optimisation, they also present conditions under which ECG  outperforms EM;
+	\item \citet{Berg+2010:PU} present unsupervised learning (both EM and ECG) for logistic CPDs to the NLP community.
+\end{itemize}

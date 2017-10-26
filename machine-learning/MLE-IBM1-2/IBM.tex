@@ -1,0 +1,105 @@
+In these notes I do not discuss EM in depth with proofs and guarantees, but I go step by step over the derivation of the M-step for models such as IBM 1 and 2.
+
+\section{Notation}
+
+
+Let $F$ be a random variable over French sentences and $f = f_1^m = \angbrack{f_1 \ldots f_m}$ an assignment of this random variable.
+Similarly, let $E$ be a random variable over English sentences, and $e=e_1^l$ and assignment.
+Finally, let $A$ be a random variable over alignments, where an alignment is bijection that maps from $[1 \ldots m]$ to $[0 \ldots l]$ where we extend every English sentence to contain a \textsc{Null} token occupying the $0$th position.
+
+
+\section{IBM model 1}
+
+\req{IBM1} specifies IBM model 1\citep{Brown+1993:smt}.
+Assumptions: 1) alignments are independent of one another; 2) the distribution over possible alignments is uniform.
+The lexical distribution $t$ is parameterised as a collection of categorical distributions. That is, let $t(d|c) = \theta_{c,d}$ where $c \in V_E \cup \{\textsc{Null}\}$ is a word in the English vocabulary (or \textsc{Null}) and $d \in V_F$ is a word in the French vocabulary, then $\sum_d \theta_{d,c} = 1$.\footnote{We use $c$ and $d$ as in \emph{context} and \emph{decision}, respectively.} 
+
+\begin{align}
+P(F=f|E=e) &= 
+	\sum_a P(f,a|e) \nonumber \\ 
+	&\propto \sum_a \prod_{j=1}^m t(f_j|e_{a_j}) \label{eq:IBM1}
+\end{align}
+
+In order to derive MLE estimates for IBM1, let us pretend for a moment that we observe a single sentence pair.
+Then \req{MLE1} states the maximum likelihood objective, a constrained optimisation.
+
+\begin{align}\label{eq:MLE1}
+\theta_{\text{MLE}} &= \argmax_{\Theta} \sum_a \prod_{j=1}^m t(f_j|e_{a_j}) \\
+ & \text{s.t. } \forall c, \sum_d \theta_{c,d} = 1 \nonumber 
+\end{align}
+
+We can approach the optimisation problem in \req{MLE1} as an unconstrained optimisation by introducing a collection of Lagrangian multipliers (one per categorical distribution).
+Thus, let $\lambda_c$ for $c \in V_E \cup \{\textsc{Null}\}$ be a Lagrangian multiplier.
+
+\begin{align}\label{eq:MLE1Lag}
+h(\theta, \lambda) &= \sum_a \prod_{j=1}^m t(f_j|e_{a_j}) - \sum_c \lambda_c \left( \sum_d \theta_{c,d} - 1 \right)
+\end{align}
+
+We can now take derivatives of \req{MLE1Lag} with respect to some $\theta_{c,d}$ and $\lambda_c$ and set those to zero.
+
+Let us start with the likelihood term.
+
+\begin{align}
+\partiald{h(\theta,\lambda)}{\theta_{c,d}} 
+	&= \sum_a \sidepartial{P(f,a|e)}{\theta_{c,d}} \label{eq:D1Prod} \\
+	&= \sum_a P(f,a|e) \sum_{j=1}^m \sidepartial{\log t(f_j|e_{a_j})}{\theta_{c,d}} \label{eq:D1LogId}\\
+	&= \sum_a P(f,a|e) \sum_{j=1}^m \frac{1}{\theta_{c,d}} \delta(c, e_{a_j}) \delta(d, f_j) \label{eq:D1LogDer}\\
+	&= \frac{1}{\theta_{c,d}} \sum_a P(f,a|e) \sum_{j=1}^m \delta(c, e_{a_j}) \delta(d, f_j) \label{eq:D1ThetaCD}\\
+	&= \frac{1}{\theta_{c,d}} \sum_a P(f,a|e) n_a(c,d) \label{eq:D1Count}\\
+	&= \frac{1}{\theta_{c,d}} \sum_a P(f|e) P(a|f,e) n_a(c,d)  \label{eq:D1ChainRule}\\
+	&= \frac{P(f|e)}{\theta_{c,d}} \sum_a P(a|f,e) n_a(c,d)   \label{eq:D1PFE} \\
+	&= \frac{P(f|e)}{\theta_{c,d}} \expec{n_a(c,d)}{P(a|f,e)} \label{eq:D1Expec}
+\end{align}
+
+In \req{D1Prod}, we push the derivative through the sum due to linearity, but stop at $P(f,a|e)$ which involves derivatives of products.
+To deal with the product, in \req{D1LogId} we make use of the log-identity for derivatives, i.e $\sideder{\log f(x)}{x} = \frac{1}{f(x)}\sideder{f(x)}{x}$, thus $\sideder{f(x)}{x} = f(x) \sideder{\log f(x)}{x}$. Again due to linearity, the derivative goes through the sum and stops at the log.
+In \req{D1LogDer}, we take the derivative of the log with respect to $\theta_{c,d}$, which will be non-zero only when $e_{a_j}$ matches the context $c$ and $f_j$ matches the decision $d$ -- to express this fact we introduce $\delta(a,b)$ which is $1$ when $a = b$ and $0$ otherwise.
+In \req{D1ThetaCD} we just rearrange the terms making it explicit that $\theta_{c,d}$ does not depend on $a$ or $j$.
+In \req{D1Count} we introduce a function $n_a(c,d) = \sum_{j=1}^m \delta(c, e_{a_j}) \delta(d, f_j)$ which counts the number of times $c,d$ participates in $a$.
+\req{D1ChainRule} follows by application of the chain rule of probabilities.
+And \req{D1PFE} shows that $P(f|e)$ is not a function of $a$, in fact, it results from marginalisation over all possible alignment configurations.
+This last result is really handy as it leaves us with a sum over $P(a|f,e) n_a(c,d)$ where $P(a|f,e)$ is the posterior probability over alignments and the sum is in fact an expectation.
+\req{D1Expec} shows the most important result of this block of identities, namely, that the derivative is proportional to the expected number of occurrences of $c,d$ under the posterior distribution over alignment configurations.
+
+
+Now let us turn to the Lagrangian term. Its derivative with respect to a fixed $\theta_{c,d}$ is shown in \req{D2Final}.
+
+\begin{align}
+\sidepartial{h(\theta, \lambda)}{\theta_{c,d}}
+ &= \sidepartial{\sum_{c'} \lambda_{c'} \sum_{d'} t(d'|c') -1}{\theta_{c,d}} \\
+ &= \sum_{c'} \lambda_{c'} \sum_{d'} \sidepartial{t(d'|c')}{\theta_{c,d}} - 0 \\
+ &= \sum_{c'} \lambda_{c'} \sum_{d'} \delta(c,c') \delta(d,d') \\
+ &= \lambda_{c} \label{eq:D2Final}
+\end{align}
+
+Now we put together \req{D1Expec} (derivative of the likelihood term) and \req{D2Final} (derivative of the Lagrangian term), and make $\sidepartial{h(\theta, \lambda)}{\theta_{c,d}} = 0$.
+
+\begin{align}
+0 &= \sidepartial{h(\theta, \lambda)}{\theta_{c,d}}  \\
+0 &= \frac{P(f|e)}{\theta_{c,d}} \expec{n_a(c,d)}{P(a|f,e)} - \lambda_c\\
+\lambda_c &= \frac{P(f|e)}{\theta_{c,d}} \expec{n_a(c,d)}{P(a|f,e)}\\
+\theta_{c,d} &= \frac{P(f|e)}{\lambda_c} \expec{n_a(c,d)}{P(a|f,e)} \label{eq:ThetaAsFuncOfLambda}
+\end{align}
+
+Now recall the constraint $\sum_d \theta_{c,d} = 1$ which can also be derived by taking $\sidepartial{h(\theta, \lambda)}{\lambda_c} = 0$. 
+
+\begin{align}
+1 &= \sum_d \theta_{c,d} \\
+  &= \sum_d \frac{P(f|e)}{\lambda_c} \expec{n_a(c,d)}{P(a|f,e)} \label{eq:SubstTheta}\\
+  &= \frac{P(f|e)}{\lambda_c} \sum_d \expec{n_a(c,d)}{P(a|f,e)} \\
+  &= \frac{P(f|e)}{\lambda_c} \expec{\sum_d n_a(c,d)}{P(a|f,e)} \\
+\lambda_c &= P(f|e) \expec{n_a(c)}{P(a|f,e)} \label{eq:FinalLambdaC}
+\end{align}
+
+In \req{SubstTheta}, we substitute $\theta_{c,d}$ by the result in \req{ThetaAsFuncOfLambda}.
+We factor $\frac{P(f|e)}{\lambda_c}$ out of the sum since it does not depend on $d$.
+Then, we push the sum through the expectation due to linearity.
+Finally, we define $n_a(c) \triangleq \sum_d n_a(c,d)$ as the number of times $c$ participates in $a$.
+The result in \req{FinalLambdaC} can be combined with \req{ThetaAsFuncOfLambda} to yield the final result shown in \req{IBM1EM} (note that the terms $P(f|e)$ cancel out).
+
+\begin{align}\label{eq:IBM1EM}
+\theta_{c,d} &= \frac{\expec{n_a(c,d)}{P(a|f,e)}}{\expec{n_a(c)}{P(a|f,e)}} 
+\end{align}
+
+Obviously this is not a closed form solution as $\theta_{c,d}$ appears on both sides of the equation -- recall that $P(a|f,e)$ depends parameters $\theta$.
+But this suggests an iterative solution which is in fact the EM algorithm \citep{Dempster+77:EM}.

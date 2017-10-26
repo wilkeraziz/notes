@@ -1,0 +1,110 @@
+\documentclass[11pt]{article}
+\usepackage{geometry}                % See geometry.pdf to learn the layout options. There are lots.
+\geometry{letterpaper}                   % ... or a4paper or a5paper or ... 
+\usepackage{latexsym}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{natbib}
+\usepackage{physics}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\definecolor{darkblue}{rgb}{0, 0, 0.5}
+\hypersetup{colorlinks=true,citecolor=darkblue, linkcolor=darkblue, urlcolor=darkblue}
+
+
+\title{Notes on ADVI}
+\author{Wilker Aziz}
+
+
+\begin{document}
+\maketitle
+
+
+Consider a generative model of some observed data $x$ 
+\begin{equation}
+p(x, \theta) = p(\theta)p(x|\theta)
+\end{equation}
+ where $\theta$ is a continuous latent random variable possibly constrained to a subset of $\mathbb R^d$.
+ For generality, we assume that the posterior distribution
+ \begin{equation}
+ 	p(\theta|x) = \frac{p(\theta)p(x|\theta)}{\int p(\theta')p(x|\theta') \mathrm{d}\theta'}
+ \end{equation}
+ is not available in closed-form due to a generally intractable marginalisation.
+ 
+ADVI \citep{KucukelbirEtAl2016ADVI} is a black-box inference technique based on variational inference (VI) \citep{JordanEtAl1999VI,BleiEtAl2017VI} and automatic differentiation. 
+ADVI assumes
+\begin{itemize}
+	\item a differentiable observation model $p(x|\theta)$;
+	\item a posterior $p(\theta|x)$ whose support is that of the prior $p(\theta)$;
+	\item a bijective transformation from the (possibly constrained) support of the prior to $\mathbb R^d$;
+	\item a reparameterisable variational family;
+\end{itemize}
+
+
+In VI, we maximise a lowerbound on the marginal likelihood (or evidence) of the data (ELBO)
+\begin{equation}
+	\mathcal E(\phi|x) = \mathbb E_{q_\phi(\theta)}\left[ \log \frac{p(x, \theta)}{q_\phi(\theta)} \right]
+\end{equation}
+where $\phi$ indexes a member of a variational family.
+VI thus turns inference into an optimisation problem which under certain circumstances can be approached by stochastic gradient-based optimisation---ADVI is a an inference technique which satisfies these circumstances for a large class of models.
+In order to perform unconstrained optimisation with respect to variational parameters, we express the ELBO in terms of a model transformed with respect to the support of the random variable $\theta$. That is, we employ an invertible transformation mapping from the support of $p(\theta|x)$ to $\mathbb R^d$
+\begin{subequations}
+\begin{align}
+\zeta &= t(\theta) \\
+\theta &= t^{-1}(\zeta)
+\end{align}
+\end{subequations}
+ and optimise an alternative ELBO
+\begin{equation}\label{eq:elbo}
+\begin{aligned}
+	\mathcal E(\phi|x) = \mathbb E_{q_\phi(\zeta)}\left[ \log \frac{p(x, \zeta)}{q_\phi(\zeta)} \right] = \mathbb E_{q_\phi(\zeta)}\left[ \log p(x, \theta=t^{-1}(\zeta)) +\log \abs{\det J_{t^{-1}(\zeta)}} \right] \\
+	+ \mathbb H\left[ q_\phi(\zeta) \right]
+\end{aligned}
+\end{equation}
+where $J_{t^{-1}(\zeta)}$ is the Jacobian matrix of the inverse transformation.\footnote{A change of variable applied to a probability density function requires scaling by the \href{https://en.wikipedia.org/wiki/Jacobian_matrix_and_determinant\#Jacobian_determinant}{absolute determinant of the Jacobian}: $p_{X,Y}(x, y) = p_{X,Z}(x, f^{-1}(y))\abs{\det J_{f^{-1}(y)}}$.}
+Note that we only need a variational family for the unconstrained variable.\footnote{Here we have the first smart move towards black-box inference: transform the model first, so that the variational family already meets the requirements for unconstrained optimisation.}
+
+Automatic differentiation \citep{BaydinEtAl2015AD} is a very powerful tool that allows us to approach optimisation of arbitrarily complex functions for as long as they are differentiable. 
+An objective such that of (\ref{eq:elbo}) is in general not tractable, but because we choose $q_\phi(\zeta)$ we can make sure that obtaining an MC estimate of the ELBO is trivial.
+Stochastic optimisation \citep{RobbinsEtAl1951SA} is another powerful black-box tool whereby we can attain a local optima of a surface by taking noisy, though unbiased, gradient steps.
+Unfortunately, the expression in (\ref{eq:elbo}) is not ready for stochastic gradient-based optimisation, since the density which we take the expectation with respect to, i.e. $q_\phi(\zeta)$, depends on the parameters we mean to differentiate with respect to, i.e. $\phi$.
+It turns out that for some variational families, which we will call \emph{reparameterisable} \citep{Kingma+2014:VAE,RezendeEtAl14VAE}, we can express the ELBO in terms of a distribution which is independent of variational parameters.
+Location-scale distributions are such that we have an invertible transformation that absorbs the parameters of the distribution,\footnote{\citet{RuizEtAl2016GRep} introduce a more general technique to reparameterise densities that are not location-scale.} i.e.
+\begin{subequations}
+\begin{align}
+\epsilon &= s_\phi(\zeta) = C^{-1}(\zeta - \mu) \\
+\zeta &= s_\phi^{-1}(\epsilon) = \mu + C \epsilon
+\end{align}
+\end{subequations}
+where $\phi = \{\mu, C\}$ consists of a location parameter $\mu$ and scale parameter $C$ such that $\det C > 0$,\footnote{Note that the invertible transformation depends on variational parameters.} and whose Jacobians are 
+\begin{subequations}
+\begin{align}
+J_{s_\phi(\zeta)} &=  C^{-1} \\
+J_{s_\phi^{-1}(\epsilon)} &=  C
+\end{align}
+\end{subequations}
+Consider the general problem of estimating $\mathbb E_{q(\zeta|\mu, C)}\left[f(\zeta)\right]$ (\ref{eq:original-expectation}): we first employ \href{https://en.wikipedia.org/wiki/Integration_by_substitution\#Substitution_for_multiple_variables}{integration by substitution}  (\ref{eq:substitution}) in order to integrate over the support of $s^{-1}_\phi$;  then we employ a \href{https://en.wikipedia.org/wiki/Integration_by_substitution\#Application_in_probability}{change of density} (\ref{eq:rep-density}) to express the expectation with respect to parameter-free $q(\epsilon)$.
+% and let us employ a change of variable via transformation , now let us apply the location-scale change of variable:
+\begin{subequations}
+\begin{align}
+\mathbb E_{q(\zeta|\mu, C)}\left[f(\zeta)\right]  
+ &= \int q(\zeta|\mu, C) f(\zeta) \dd{\zeta} \label{eq:original-expectation}\\
+ &= \int q(\zeta=s^{-1}_\phi(\epsilon)|\mu, C) f(\zeta = s_\phi^{-1}(\epsilon)) \underbrace{\abs{\det J_{s_\phi^{-1}(\epsilon)}}\dd{\epsilon}}_{\text{change of variable}} \label{eq:substitution}\\
+ &= \int \underbrace{q(\epsilon = s(\zeta)) \abs{\det J_{s_\phi(\zeta)}}}_{\text{change of density}} f(\zeta = s_\phi^{-1}(\epsilon)) \abs{\det J_{s_\phi^{-1}(\epsilon)}}\dd{\epsilon} \label{eq:rep-density}\\
+ &= \int q(\epsilon = s_\phi(\zeta)) \abs{\det C^{-1}} f(\zeta = s_\phi^{-1}(\epsilon)) \abs{\det C}  \dd{\epsilon}  \\
+ &= \mathbb E_{q(\epsilon)}\left[ f(\zeta=s_\phi^{-1}(\epsilon)) \right] \quad.
+\end{align}
+\end{subequations}
+We can now express the gradient of the ELBO with respect to variational parameters in terms of $q(\epsilon)$, i.e.
+\begin{equation}\label{eq:elbo-rep}
+	\grad_\phi{\mathcal E(\phi|x)} = \mathbb E_{q(\epsilon)}\left[ \grad_\phi{\log \frac{p(x, \theta=t^{-1}(\zeta=s_\phi^{-1}(\epsilon))) \abs{\det J_{t^{-1}(\zeta=s_\phi^{-1}(\epsilon))}} }{q_\phi(\zeta=s_\phi^{-1}(\epsilon))}} \right]
+\end{equation}
+for which we can trivially obtain an MC estimate since.\footnote{Note that $s_\phi$ and $s_\phi^{-1}$ are differentiable functions, thus automatic differentiation will take care of derivatives w.r.t. $\phi$ via chain rule.}
+
+
+
+\bibliographystyle{apalike}
+
+\bibliography{advi.bib}
+
+\end{document}  

@@ -1,0 +1,43 @@
+\documentclass[11pt]{article}
+\usepackage{geometry}                
+\geometry{letterpaper}               
+\usepackage{graphicx}
+\usepackage{latexsym}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{epstopdf}
+\usepackage{natbib}
+\usepackage{xspace}
+\usepackage{xcolor}
+\usepackage{verbatim}
+\usepackage{dsfont}
+
+
+% Helper commands
+\newcommand{\req}[1]{Equation (\ref{eq:#1})}
+\newcommand{\tcofixed}{{\ensuremath{\mathsf t, \mathsf c, \mathsf o}}}
+\newcommand{\tcoprime}{{\ensuremath{t', c', o'}}}
+\newcommand{\tco}{{\ensuremath{t, c, o}}}
+\newcommand{\xt}[1]{\ensuremath{x^{(#1)}}\xspace}
+\newcommand{\zt}[1]{\ensuremath{z^{(#1)}}\xspace}
+\newcommand{\partiald}[2]{\ensuremath{\frac{\partial\ensuremath{#1}}{\partial \ensuremath{#2}}}}
+%\DeclareMathOperator*{\argmin}{arg\,min}
+\DeclareMathOperator*{\argmax}{arg\,max}
+
+\title{Expectation-Maximisation}
+\author{Wilker Aziz}
+%\date{}                                           % Activate to display a given date or no date
+
+\begin{document}
+\maketitle
+%\section{}
+%\subsection{}
+
+
+\input{EM}
+
+\bibliographystyle{apalike}
+
+\bibliography{EM.bib}
+
+\end{document}  
