@@ -1,0 +1,142 @@
+\documentclass[11pt]{article}
+\usepackage{geometry}                % See geometry.pdf to learn the layout options. There are lots.
+\geometry{letterpaper}                   % ... or a4paper or a5paper or ... 
+\usepackage{latexsym}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{natbib}
+\usepackage{physics}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\definecolor{darkblue}{rgb}{0, 0, 0.5}
+\hypersetup{colorlinks=true,citecolor=darkblue, linkcolor=darkblue, urlcolor=darkblue}
+
+
+\DeclareMathOperator*{\argmin}{arg\,min}
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator{\KL}{KL}
+\DeclareMathOperator{\ELBO}{ELBO}
+\newcommand{\x}{\ensuremath{\mathbf x}}
+\newcommand{\z}{\ensuremath{\mathbf z}}
+\newcommand{\Z}{\ensuremath{\mathbf Z}}
+
+\title{Notes on Co-ordinate Ascent Variational Inference (CAVI)}
+\author{Wilker Aziz}
+
+
+\begin{document}
+\maketitle
+
+\section{ELBO}
+
+Consider a joint distribution of latent variables $\z = z_1^m$ and observations $\x=x_1^n$
+\begin{equation}
+p(\x, \z) = p(\z)p(\x|\z)
+\end{equation}
+ where $\z$ help govern the distribution of the data. 
+ In a Bayesian model, we draw the latent variables from a prior $p(\z)$ and relate them to observations through an observation model---or likelihood---$p(\x|\z)$.\footnote{
+In a Bayesian model every unobserved aspect of our story is a latent variable. The prior distribution may itself depend on some parameter $\alpha$ but in Bayesian modelling we either consider those \emph{fixed} hyperparameters (that undergo no tuning nor optimisation) or we further extend the model hierarchy by imposing a prior $p(\alpha)$ and treating $\alpha$ as any other latent variable.}
+Inference in Bayesian models then consists in conditioning on data and computing the posterior $p(\z|\x)$.
+ \begin{equation}\label{eq:posterior}
+ 	p(\z|\x) = \frac{p(\z)p(x|\z)}{p(\x)}
+ \end{equation}
+The posterior can be used to making decisions, predictions, exploratory research, amongst other applications. 
+Unfortunately, $p(\z|\x)$ is not typically available in closed-form due to a generally intractable marginalisation.\footnote{The quantity $p(\x)$ is of central importance in Bayesian model selection---it is known as marginal likelihood or model evidence.}
+\begin{equation}
+p(\x) = \int p(\z)p(\x|\z) \dd \z
+\end{equation}
+
+
+ 
+Variational inference (VI) \citep{JordanEtAl1999VI,BleiEtAl2017VI} suggests we approximate the posterior via optimisation. 
+ We start by positing a family of distributions $\mathcal Q$ and proceed by finding the member of that family which minimises $\KL$ divergence to the exact posterior. 
+ \begin{equation}\label{eq:objective}
+ 	q^* = \underset{q \in \mathcal Q}{\argmin} ~ \KL\left[q(\Z) || p(\Z|\x) \right]
+ \end{equation}
+Minimising this KL is equivalent to maximising the so called \emph{evidence lowerbound} (ELBO).
+\begin{equation}\label{eq:ELBO}
+	\underset{q\in \mathcal Q}{\argmax} ~ \mathbb E_{q(\Z)}\left[ \log \frac{p(\x, \Z)}{q(\Z)} \right]
+\end{equation}
+
+The objective in (\ref{eq:objective}) can be justified by expressing the $\log$-evidence as an expectation wrt an arbitrary density $q(\z)$.\footnote{We are constrained to picking $q(\z)$ such that it has support everywhere where $p(\z)$ has support.}
+\begin{subequations}\label{eq:log-evidence}
+\begin{align}
+\log p(\x) &= \log \int p(\x, \z) \dd \z \\
+&= \log \int p(\x, \z)\frac{q(\z)}{q(\z)} \dd \z \\
+&= \log \mathbb E_{q(\Z)}\left[\frac{p(\x,\Z)}{q(\Z)}\right] \\
+&\overset{\text{JI}}{\ge} \underbrace{\mathbb E_{q(\Z)}\left[\log \frac{p(\x,\Z)}{q(\Z)}\right]}_{\ELBO(q)} \label{eq:JI} \\
+&= \mathbb E_{q(\Z)}\left[\log \frac{p(\Z|\x)p(\x)}{q(\Z)}\right] \\
+&= \underbrace{\mathbb E_{q(\Z)}\left[\log \frac{p(\Z|\x)}{q(\Z)}\right]}_{-\KL\left[q(\Z) || p(\Z|\x)\right]} + \log p(\x) \label{eq:elbo-gap}
+\end{align}
+\end{subequations}
+We have derived a lowerbound on the $\log$-evidence (\ref{eq:JI}) by using Jensen's inequality.\footnote{In (\ref{eq:JI}) we used Jensen's inequality to push the log (a concave function) through the expectation (a convex combination) getting a lowerbound on the $\log$-evidence.}
+Also note from (\ref{eq:elbo-gap})  
+\begin{equation}\label{eq:gap}
+\log p(\x) \ge \log p(\x) -\underbrace{\KL\left[q(\Z) || p(\Z|\x)\right]}_{\text{gap}}
+\end{equation}
+that the gap is exactly $\KL[q(\Z)||p(\Z|\x)]$.
+Minimising the gap tightens the bound and justifies the principle stated in Equation (\ref{eq:objective}).
+However, expressed as such, that objective is of little use---due to the intractable marginalisation in (\ref{eq:posterior}) we cannot compute the exact posterior neither access it at any given point. 
+Maximising the ELBO is far more convenient---note that (\ref{eq:ELBO}) does not require the intractable normaliser---and as it turns out is equivalent to minimising (\ref{eq:objective}).
+\begin{subequations}
+\begin{align}
+q^* &= \underset{q \in \mathcal Q}{\argmin} ~ \KL\left[q(\Z) || p(\Z|x) \right] \\
+ &= \underset{q \in \mathcal Q}{\argmin} ~ \mathbb E_{q(\Z)}\left[\log \frac{q(\Z)}{p(\Z|\x)}  \right] \\
+ &= \underset{q \in \mathcal Q}{\argmin} ~ - \mathbb E_{q(\Z)}\left[\log \frac{p(\Z|\x)}{q(\Z)}  \right] \\
+ &= \underset{q \in \mathcal Q}{\argmax} ~ \mathbb E_{q(\Z)}\left[\log \frac{p(\Z)p(\x|\Z)}{q(\Z)p(\x)}  \right] \\
+ &= \underset{q \in \mathcal Q}{\argmax} ~ \mathbb E_{q(\Z)}\left[\log \frac{p(\Z)p(\x|\Z)}{q(\Z)} \right] - \underbrace{\log p(\x)}_{\text{constant}} \\ 
+ &= \underset{q \in \mathcal Q}{\argmax} ~ \underbrace{\mathbb E_{q(\Z)}\left[\log \frac{p(\x, \Z)}{q(\Z)} \right]}_{\text{ELBO}} 
+\end{align}
+\end{subequations}
+
+\section{Mean field and CAVI}
+
+The mean field variation family assumes that latent variables are mutually independent and each is governed by a distinct factor.
+\begin{equation}\label{eq:mean-field}
+q(\z) = \prod_{i=1}^m q_i(z_i)
+\end{equation}
+
+In co-ordinate ascent we optimise one factor, e.g. $q_j(z_j)$, while holding the others \begin{equation}
+q_{-j}(\z_{-j}) \overset{\text{def}}{=} \prod_{i\neq j} q_i(z_i)
+\end{equation}
+fixed---we use $\z_{-j}$ to indicate all but the $j$th variable and similarly $q_{-j}$ to indicate all but the $j$th factor.
+Let us then focus on the $\ELBO$'s dependency on the $j$th factor
+\begin{equation}\label{eq:elboj}
+\ELBO(q_j) = \mathbb E_{j}\left[ \mathbb E_{-j}\left[ \log p(\x, \Z_{-j}, Z_j)\right] \right] \underbrace{- \mathbb E_j\left[ \log q(Z_j)\right]}_{\mathbb H[q_j]} - \underbrace{\mathbb E_{-j}[ \log q_{-j}(\Z_{-j}) ]}_{\text{constant wrt }q_j}
+\end{equation}
+where we use $\mathbb E_j$ to denote an expectation wrt the $j$th factor and $\mathbb E_{-j}$ to denote an expectation with respect to all but the $j$th factor.\footnote{Equation (\ref{eq:elboj}) can be written like that because the mean field family is fully factorised, thus the original expectation can be written as iterated expectations and the order of iteration is immaterial.}
+Now define the $\log$-density
+\begin{equation}\label{eq:log-pi}
+\log \pi(\x, z_i) = \mathbb E_{-j}\left[ \log p(\x, \Z_{-j}, Z_j)\right] - C
+\end{equation}
+where $C$ is a $\log$-normalising constant that makes $\pi$ a proper density.
+In other words, 
+\begin{equation}
+\pi(\x, z_j) \propto \exp\left\{ \mathbb E_{-j}\left[ \log p(\x, \Z_{-j}, Z_j)\right] \right\} 
+\end{equation}
+where solving the expectation frees the dependency on all but the $j$th latent variable. 
+Now note that substituting (\ref{eq:log-pi}) into (\ref{eq:elboj}) 
+\begin{subequations}
+\begin{align}
+\ELBO(q_j) &= \mathbb E_{j}\left[ \log \pi(\x, Z_j) \right] - \mathbb E_j\left[ \log q(Z_j)\right] \\
+&= -\KL\left[ q(Z_j) || \pi(\x, Z_j)\right] \label{eq:KLj}
+\end{align}
+\end{subequations}
+reveals that the $j$th component of the $\ELBO$ is maximised when the $\KL$ in (\ref{eq:KLj}) is minimised---which happens when $q(z_j) = \pi(\x, z_j)$.\footnote{$\KL[f|g]=0$ if, and only if, $f$ is identical to $g$ almost everywhere---that is, everywhere where $\pi(\x, z_j)$ has support.}
+Thus the optimum co-ordinate update is
+\begin{equation}
+q_j^*(z_j) \propto \exp\left\{ \mathbb E_{-j}\left[ \log p(\x, \Z_{-j}, Z_j)\right] \right\} 
+\end{equation}
+or equivalently 
+\begin{equation}
+q_j^*(z_j) \propto \exp\left\{ \mathbb E_{-j}\left[ \log p(Z_j| \Z_{-j}, \x)\right] \right\}
+\end{equation}
+since $\log p(\x)$ is constant wrt $q_j$.
+
+
+
+\bibliographystyle{apalike}
+
+\bibliography{cavi.bib}
+
+\end{document}  
