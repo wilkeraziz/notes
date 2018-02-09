@@ -1,0 +1,83 @@
+\section{Categorical}
+
+Suppose $X$ takes on values in the discrete interval $[1, k]$, then we say $X$ is Categorically-distributed 
+\begin{equation}\label{eq:cat-pmf}
+X \sim \Cat(\theta_1, \ldots, \theta_k)
+\end{equation}
+where $\theta_1, \ldots, \theta_k$ are the Categorical parameters subject to $\theta_x > 0$ and $\sum_{x=1}^k \theta_x = 1$. 
+The Categorical pmf is
+\begin{equation}
+p(a; \theta_1^k) = \Cat(X=a|\theta_1, \ldots, \theta_k) = \prod_{x=1}^k \theta_x^{\delta_{xa}}
+\end{equation}
+where $\delta{ij}$ is the \href{https://en.wikipedia.org/wiki/Kronecker_delta}{Kronecker delta} and therefore each Categorical parameter corresponds to the probability of the respective category---i.e. $P_X(X=x) = \theta_x$.
+
+We now derive the maximum likelihood estimate of the parameters $\theta_1^k$.
+We start by rewriting the objective (\ref{eq:mle}) in terms for the Categorical  pmf (\ref{eq:bern-pmf})
+\begin{subequations}
+\begin{align}
+\theta^\star &= \argmax_{\theta_1^k \in \Delta} ~ \mathcal L(\theta_1^k)  \\
+ &= \argmax_{\theta_1^k\in \Delta} ~ \sum_{i=1}^n \log p(x_i; \theta_1^k) \label{bern:pmf-in}\\
+ &= \argmax_{\theta_1^k\in \Delta} ~ \sum_{i=1}^n  \log \prod_{x=1}^k \theta_x^{\delta_{x x_i}} \\
+% &= \argmax_{\theta_1^k\in \Delta} ~ \sum_{i=1}^n  \sum_{x=1}^k \log \theta_x^{\delta_{x x_i}}\\
+ &= \argmax_{\theta_1^k\in \Delta} ~ \sum_{i=1}^n \sum_{x=1}^k \delta_{x x_i} \log \theta_x\\
+% &= \argmax_{\theta_1^k\in \Delta} ~ \sum_{x=1}^k \sum_{i=1}^n \delta_{x x_i} \log \theta_x\\
+ &= \argmax_{\theta_1^k\in \Delta} ~ \sum_{x=1}^k \log \theta_x \underbrace{\sum_{i=1}^n \delta_{x x_i}}_{n_x} \\
+ &= \argmax_{\theta_1^k\in \Delta} ~ \sum_{x=1}^k n_x \log \theta_x 
+\end{align}
+\end{subequations}
+where we denote the number of observations of class $x \in [1, k]$ by $n_x$.
+
+To avoid optimising the constrained objective, where $\sum_{x=1}^k \theta_x = 1$, we employ a \href{https://en.wikipedia.org/wiki/Lagrange_multiplier}{Lagrange multiplier} $\lambda$ such that the new objective is
+\begin{subequations}
+\begin{align}
+\theta^\star &= \argmax_{\theta_1^k \in \mathbb R^k} ~ \underbrace{\mathcal L(\theta_1^k) - \lambda \left[ \left(\sum_{x=1}^k \theta_x\right) - 1\right]}_{\mathcal L(\theta_1^k, \lambda)} \\
+ &~\text{s.t. } \theta_x > 0 \text{ for }x \in [1, k] \nonumber
+\end{align}
+\end{subequations}
+
+
+Now we find the first partial derivative of  $L(\theta_1^k, \lambda)$ with respect to $\lambda$
+\begin{subequations}
+\begin{align}
+	\pdv{\lambda}\mathcal L(\theta_1^k, \lambda) &= \pdv{\lambda} \left\{ \sum_{x=1}^k n_x \log \theta_x  - \lambda \left[ \left(\sum_{x=1}^k \theta_x\right) - 1 \right] \right\} \\
+	&= \cancelto{0}{\pdv{\lambda} \left\{ \sum_{x=1}^k n_x \log \theta_x  \right\} } - \left[ \left(\sum_{x=1}^k \theta_x\right) - 1 \right] \\
+	&= 1 - \sum_{x=1}^k \theta_x
+\end{align}
+\end{subequations}
+where setting the derivative to zero yields
+\begin{equation} \label{eq:cat-const}
+	\sum_{x=1}^k \theta_x = 1 \quad . 
+\end{equation}
+
+We now turn to the first partial derivative of $L(\theta_1^k, \lambda)$ with respect to $\theta_j$ for $j \in [1, k]$
+\begin{subequations}
+\begin{align}
+	\pdv{\theta_j}\mathcal L(\theta_1^k, \lambda) &= \pdv{\theta_j} \left\{ \sum_{x=1}^k n_x \log \theta_x  - \lambda \left[ \left(\sum_{x=1}^k \theta_x\right) - 1 \right] \right\} \\
+	&= \sum_{x=1}^k n_x  \pdv{\theta_j} \log \theta_x - \lambda  \sum_{x=1}^k \pdv{\theta_j} \theta_x \\
+	&= \sum_{x=1}^k n_x \frac{\delta{jx}}{\theta_x} - \lambda  \sum_{x=1}^k \delta_{jx} \\
+	&= \frac{n_j}{\theta_j} - \lambda
+\end{align}
+\end{subequations}
+where setting the derivative to zero yields
+\begin{subequations}
+\begin{align}
+0 &= \frac{n_j}{\theta_j} -\lambda \\
+\lambda &= \frac{n_j}{\theta_j} \\
+\theta_j &= \frac{n_j}{\lambda} \label{eq:thetaj}
+\end{align}
+\end{subequations}
+
+Now substituting (\ref{eq:thetaj}) into (\ref{eq:cat-const}) we have
+\begin{subequations}
+\begin{align}
+\sum_{x=1}^k \theta_x  = \sum_{x=1}^k \frac{n_x}{\lambda} = \frac{1}{\lambda} \sum_{x=1}^k n_x = \frac{1}{\lambda} n  = 1
+\end{align}
+\end{subequations}
+and therefore $\lambda = \frac{1}{n}$. And finally, substituting $\lambda$ in (\ref{eq:thetaj})
+\begin{equation}
+	\theta_j =  \frac{n_j}{n}
+\end{equation}
+yields the maximum likelihood estimate.
+Note that $\theta_j > 0$ is satisfied as long as $n_j > 0$.
+
+

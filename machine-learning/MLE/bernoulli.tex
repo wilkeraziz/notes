@@ -1,0 +1,48 @@
+\section{Bernoulli}
+
+Suppose $X$ takes on values in the set $\{0, 1\}$, then we say $X$ is Bernoulli-distributed 
+\begin{equation}\label{eq:bern-pmf}
+X \sim \Bern(\theta)
+\end{equation}
+where $0 < \theta < 1$ the Bernoulli parameter.
+The Bernoulli pmf is
+\begin{equation}
+p(x; \theta) = \Bern(X=x|\theta) = \theta^x (1-\theta)^{(1-x)}
+\end{equation}
+and therefore the Bernoulli parameter corresponds to the probability of the positive class---i.e. $P_X(X=1)=\theta$.
+
+We now derive the maximum likelihood estimate of the parameter $\theta$.
+We start by rewriting the objective (\ref{eq:mle}) in terms for the Bernoulli  pmf (\ref{eq:bern-pmf})
+\begin{subequations}
+\begin{align}
+\theta^\star &= \argmax_{\theta \in [0, 1]} ~ \mathcal L(\theta)  \\
+ &= \argmax_{\theta \in (0, 1)} ~ \sum_{i=1}^n \log p(x_i; \theta) \label{bern:pmf-in}\\
+ &= \argmax_{\theta \in (0, 1)} ~ \sum_{i=1}^n x_i \log \theta + (1-x_i)\log (1-\theta) \label{bern:log-property} \\
+ &= \argmax_{\theta \in (0, 1)} ~ \log \theta \underbrace{\left(\sum_{i=1}^n x_i \right)}_{n_1} + \log (1-\theta) \underbrace{\left(\sum_{i=1}^n 1 - x_i\right)}_{n_0} \\
+ &= \argmax_{\theta \in (0, 1)} ~ n_1 \log \theta + n_0 \log (1-\theta)
+\end{align}
+\end{subequations}
+where we use $n_1$ for the number of positive observations and $n_0$ for the number of negative observations---and note that $n=n_1 + n_0$ is the total number of observations.
+
+Now we find the first derivative of $\mathcal L(\theta)$ with respect to $\theta$:
+\begin{subequations}
+\begin{align}
+	\dv{\mathcal L(\theta)}{\theta} &= \dv{\theta} \left[ n_1 \log \theta + n_0 \log (1-\theta) \right] \\
+	 &= n_1 \dv{\theta} \log \theta + n_0 \dv{\theta} \log (1-\theta) \\
+	 &= n_1 \dv{\theta} \log \theta + n_0 \underbrace{\dv{(1-\theta)} \log (1-\theta) \dv{(1-\theta)}{\theta}}_{\text{chain rule of derivatives}}\\
+	 &= \frac{n_1}{\theta} + \frac{n_0}{1-\theta}(-1) 
+\end{align}
+\end{subequations}
+Setting the derivative to $0$ and solving for $\theta$ gives us the MLE solution.
+\begin{subequations}
+\begin{align}
+	0 &= \frac{n_1}{\theta} + \frac{n_0}{1-\theta}(-1)\\	
+	 &= \frac{n_1 (1 - \theta) - n_0 \theta}{\theta(1-\theta)} \label{eq:bern-no-zero}\\
+	 &= n_1 (1 - \theta) - n_0 \theta\\
+	 &= n_1 - n_1 \theta - n_0 \theta\\
+	n_1 &= \theta(n_1 + n_0)\\
+	\theta &= \frac{n_1}{n_1 + n_0}  \\
+	&= \frac{n_1}{n}
+\end{align}
+\end{subequations}
+Note that in (\ref{eq:bern-no-zero}) the denominator is never zero because the Bernoulli parameter can never be $0$ or $1$.
