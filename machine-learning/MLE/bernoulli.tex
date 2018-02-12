@@ -45,4 +45,4 @@ Setting the derivative to $0$ and solving for $\theta$ gives us the MLE solution
 	&= \frac{n_1}{n}
 \end{align}
 \end{subequations}
-Note that in (\ref{eq:bern-no-zero}) the denominator is never zero because the Bernoulli parameter can never be $0$ or $1$.
+Note that in (\ref{eq:bern-no-zero}) we have to assume that the denominator $\theta(1-\theta) \neq 0$, which excludes $\theta=0$ and $\theta=1$. That explains why we define the Bernoulli parameter in the open interval $(0, 1)$. But note that this is not a bad thing, as $\theta=0$ or $\theta=1$ would lead to $X$ being deterministic. 

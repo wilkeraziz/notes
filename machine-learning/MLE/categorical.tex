@@ -62,7 +62,7 @@ where setting the derivative to zero yields
 \begin{subequations}
 \begin{align}
 0 &= \frac{n_j}{\theta_j} -\lambda \\
-\lambda &= \frac{n_j}{\theta_j} \\
+\lambda &= \frac{n_j}{\theta_j} \label{eq:cat-not-zero} \\ 
 \theta_j &= \frac{n_j}{\lambda} \label{eq:thetaj}
 \end{align}
 \end{subequations}
@@ -75,9 +75,9 @@ Now substituting (\ref{eq:thetaj}) into (\ref{eq:cat-const}) we have
 \end{subequations}
 and therefore $\lambda = \frac{1}{n}$. And finally, substituting $\lambda$ in (\ref{eq:thetaj})
 \begin{equation}
-	\theta_j =  \frac{n_j}{n}
+	\theta_j =  \frac{n_j}{n} \label{eq:cat-solution}
 \end{equation}
 yields the maximum likelihood estimate.
-Note that $\theta_j > 0$ is satisfied as long as $n_j > 0$.
+Note that in (\ref{eq:cat-not-zero}) we have to assume $\theta_j$ is not 0, and that's why we defined the categorical pmf for $\theta_j \in \mathbb R_{>0}$. Also note that the solution in (\ref{eq:cat-solution}) is strictly positive as long as $n_j > 0$.
 
 
