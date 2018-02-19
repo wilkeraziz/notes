@@ -1,0 +1,26 @@
+Here I briefly describe some of the important results about graphical models that are necessary to follow my bachelor's course on natural language models and interfaces. For now, I only cover directed graphical models.
+
+
+\paragraph{Notation}
+
+We use capital Roman letters (e.g. $X$) for random variables (rvs) and lowercase letters for assignments (e.g. $x$). We use $X_1^n$ as a shorthand for $X_1, \ldots, X_n$ and similarly with $x_1^n$. 
+We write $P_X$ for probability distributions, and $P_X(X=x)$ for probability values---where we sometimes omit one or both occurrences of $X$, e.g. $P_X(x)$, $P(X=x)$, or $P(x)$, if no ambiguity is possible. 
+%We denote a probability mass function (pmf) by $p(x; \alpha)$, where $\alpha$ is a deterministic set of parameters. Throughout, we also assume that $\argmax$ returns a single point.
+
+%Assume we have a dataset of $n$ iid observations $\mathcal D = \{x_1, \ldots, x_n\}$ of an rv $X \sim P_X$, i.e. $\left(X_i \sim P_X\right)_{i=1}^n$.
+%First of all, from independence, we know that 
+%\begin{equation}
+%P_{X_1^n}(x_1, \ldots, x_n) = \prod_{i=1}^n P_{X_i}(x_i) = \prod_{i=1}^n P_{X}(x_i) 
+%\end{equation}
+%and we then model the probability $P_X(x)$ with a member $p(x; \alpha)$ of a parametric family  and proceed to derive a maximum likelihood estimate of $\alpha$.
+%In the following sections we use $\mathcal L(\alpha|\mathcal D)$ for the $\log$-likelihood %function
+%\begin{equation}
+%\mathcal L(\alpha|\mathcal D) = \sum_{i=1}^n \log p(x_i; \alpha)
+%\end{equation}
+%and we often omit the dependency on data writing simply $\mathcal L(\alpha)$.
+%Our objective is then
+%\begin{equation}\label{eq:mle}
+%\theta^\star = \argmax_{\theta \in \Theta} ~ \mathcal L(\theta) 
+%\end{equation}
+%where the space of valid parameters $\Theta$ is possibly subject to constraints.
+
