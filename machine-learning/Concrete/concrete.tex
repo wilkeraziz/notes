@@ -1,0 +1,108 @@
+\documentclass[11pt]{article}
+\usepackage{geometry}                % See geometry.pdf to learn the layout options. There are lots.
+\geometry{letterpaper}                   % ... or a4paper or a5paper or ... 
+\usepackage{latexsym}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{natbib}
+\usepackage{physics}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\definecolor{darkblue}{rgb}{0, 0, 0.5}
+\hypersetup{colorlinks=true,citecolor=darkblue, linkcolor=darkblue, urlcolor=darkblue}
+
+\DeclareMathOperator*{\argmin}{arg\,min}
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator*{\Cat}{Cat}
+\DeclareMathOperator*{\Exp}{Exp}
+\DeclareMathOperator*{\KL}{KL}
+\DeclareMathOperator*{\softmax}{softmax}
+\DeclareMathOperator*{\Gumbel}{Gumbel}
+\DeclareMathOperator*{\Concrete}{Concrete}
+\newcommand{\defeq}{\stackrel{\text{def}}{=}}
+
+
+\title{Notes on Concrete Distribution}
+\author{Wilker Aziz}
+
+
+\begin{document}
+\maketitle
+
+
+
+Here I revisit a continuous relaxation to discrete random variables based on the Concrete distribution (or Gumbel-Softmax distribution)  \citep{MaddisonEtAl2017:Concrete,JangEtAl2017:GumbelSoftmax}. 
+My presentation follows that of \citet{BalogEtAl2017:Gumbel} who used an \emph{exponential clocks}  \citep{BuchbinderEtAl2013} formulation.
+
+
+\paragraph{Preliminaries} Suppose $X$ a discrete random variable taking on values in $\mathcal X$. Let 
+$P(X|\phi) = \Cat(\softmax(\phi))$ for $\phi \in \mathbb R^{|\mathcal X|}$, where $\phi$ can be interpreted as a vector of log-potentials indexed by elements of $\mathcal X$. 
+We use $\lambda \in \mathbb R^{|\mathcal X|}_{\ge 0}$ to denote potentials, otherwise seen as unnormalised probabilities, that is, $\lambda_x = \exp(\phi_x) \propto P_\phi(x)$, and  thus $Z = \sum_{x \in \mathcal X} \lambda_x$ is the constant that normalises the components of $\lambda$ as to yield the pmf $p_\phi(x) = P(X=x|\phi)$.
+
+
+\paragraph{Exponential clocks} Consider we associate with each $x \in |\mathcal X|$ an independent clock such that each clock rings after a random time $T_x \sim \Exp(\lambda_x)$, where $\lambda_x$ is the rate parameter. 
+Assume we start all clocks simultaneously. Then, it is easy to show that the time until some clock rings is exponentially distributed with rate parameter $Z$, i.e., 
+\begin{equation}\label{eq:MinTx}
+	\min_{x \in \mathcal X} ~ \{T_x\} \sim \Exp(Z) 
+\end{equation}
+and that the probability of a clock ringing first is proportional to its rate, and therefore, to the pmf $p_\phi(x)$, i.e.,
+\begin{equation}\label{eq:ArgMinTx}
+	\argmin_{x \in \mathcal X} ~ \{T_x\} \sim P(X|\phi) ~.
+\end{equation}
+Two observations are due. First, because the mean of $\Exp(\mu)$ is $1/\mu$, solving the minimisation problem on the left-hand side of (\ref{eq:MinTx}), for sampled times, yields an MC estimate of $1/Z$.
+Second, and again given sampled times, the solution to the minimisation problem on the left-hand side of (\ref{eq:ArgMinTx}) yields a sample from the distribution $P(X|\phi)$.\footnote{While this algorithm bypasses the need to compute the cdf and its inverse, it still requires assessing all of the potentials (as each parameterises an exponential clock) so that ringing times can be sampled.}
+
+\paragraph{Gumbel reparameterisation} It is known that if $Y \sim \Exp(\eta)$ and $g(y) = - \ln y - c$, then $g(Y) \sim \Gumbel(-c + \ln \eta)$ where $c$ is the Euler-Mascheroni constant and $\Gumbel(-c + \ln \eta)$ is a Gumbel distribution with location $-c + \ln \eta$,  scale $1$, and mean $\ln \eta$. Applying $g$ to both sides of the equality in distribution expressed in  (\ref{eq:MinTx}) and (\ref{eq:ArgMinTx}) yields
+\begin{equation}\label{eq:MaxG}
+	\max_{x \in \mathcal X} ~ \{\phi_x + \gamma_x \} \sim \Gumbel(-c + \ln Z)
+\end{equation}
+and
+\begin{equation}\label{eq:ArgMaxG}
+	\argmax_{x \in \mathcal X} ~ \{\phi_x + \gamma_x\} \sim P(X|\phi)
+\end{equation}
+where $\gamma_x \sim \Gumbel(-c)$ is a noise variable sampled from a fixed distribution.
+%
+In direct correspondence to exponential clocks, we simulate random Gumbel noise $\gamma$, and solve the left-hand side of (\ref{eq:MaxG}) to obtain an MC estimate of $\ln Z$ and the left-hand side of (\ref{eq:ArgMaxG}) to obtain a sample from $P(X|\phi)$.
+If we are not interested in estimating $\ln Z$ through (\ref{eq:MaxG}), but instead all we care about is to sample from $P_\phi(X)$ through (\ref{eq:ArgMaxG}), we can represent $X$ in terms of the standard Gumbel distribution $\Gumbel(0, 1)$, that is
+\begin{equation}\label{eq:X-rep}
+	X \sim \argmax_{x \in \mathcal X} ~ \{\phi_x + \gamma_x\} \quad \text{with }~\gamma_x \sim \Gumbel(0, 1)
+\end{equation}
+which is equivalent to shifting the Gumbel samples by $c$---an operation that does not affect the $\argmax$.
+
+
+\paragraph{Continuous relaxation} 
+
+
+For each $x \in \mathcal X$, we can think of $\phi_x + \gamma_x$ in (\ref{eq:X-rep}) as a random log-potential $\Phi_x$, where the randomness comes from standard noise $\gamma_x \sim \Gumbel(0, 1)$.
+Then, for a temperature $\alpha \in \mathbb R_{>0}$, the transformation
+\begin{equation}\label{eq:softmax_alpha}
+\theta_x = \frac{\exp(\ln \lambda_x + \gamma_x)/\alpha}{\sum_{x' \in \mathcal X}\exp(\ln \lambda_{x'} + \gamma_{x'})/\alpha} 
+\end{equation}
+defines the components of a random vector $\Theta$ taking values in the simplex $\Delta^{|\mathcal X|-1}$.
+Each vector in this simplex can be thought of as indexing a member of a family of pmfs over $\mathcal X$.
+Then note that the argmax in (\ref{eq:ArgMaxG}) returns a discrete value associated with a vertex of the simplex. 
+If we relax this computation as to allow points in the interior of the simplex, we obtain something \citet{MaddisonEtAl2017:Concrete} called a \emph{concrete} variable (in allusion to the words \emph{con}tinuous and dis\emph{crete}---but note that concrete variables are indeed continuous). %\citet{MaddisonEtAl2017:Concrete} also presented the density of this \emph{continuous} random variable. 
+Crucially, the tempered softmax transformation in (\ref{eq:softmax_alpha}) does not affect the relative order of the random log-potentials. 
+The equivalence in distribution  
+\begin{equation}\label{eq:ArgMaxG}
+	\argmax_{x \in \mathcal X} ~ \{\theta_x\} \sim P(X|\phi) ~
+\end{equation}
+for $\Theta \sim \Concrete(\phi, \alpha)$ still holds at temperature $1.0$, but it changes to 
+\begin{equation}\label{eq:ArgMaxGAlpha}
+	\argmax_{x \in \mathcal X} ~ \{\theta_x\} \sim P(X|\phi)^\alpha ~
+\end{equation}
+in the general case.\footnote{Refer to \citep{MaddisonEtAl2017:Concrete} for the closed-form density, but note that we simulate concrete variables rather easily with a tempered softmax transformation $\theta \defeq \softmax_\alpha(\phi + \gamma)$ of log-potentials perturbed by additive Gumbel noise.}
+Moreover, as $\alpha \to 0$, sampling from the concrete pdf tends to return one-hot encodings of events in $\mathcal X$, as if their corresponding discrete events had been sampled from the discrete distribution $P(X|\phi)^\alpha$. 
+\citet{MaddisonEtAl2017:Concrete} put forward some desiderata for a relaxation of this kind and argue that the concrete distribution meets all of them. 
+In particular, the temperature parameter gives a handle on the degree to which the relaxation allows points in the interior of the simplex.\footnote{But note that setting $\alpha$ too close to zero leads to numerical instability, exploding gradients, and high variance \citep{MaddisonEtAl2017:Concrete,JangEtAl2017:GumbelSoftmax}.}
+
+\paragraph{Implications} \citet{MaddisonEtAl2017:Concrete} and \citet{JangEtAl2017:GumbelSoftmax} used the Gumbel reparameterisation to push stochasticity out of a computation graph in a way similar to the standard Gaussian reparameterisation of deep Gaussian models. They also employed the continuous relaxation above to obtain biased gradient estimates of objectives defined over large discrete spaces.
+\citet{MaddisonEtAl2017:Concrete} changes the ELBO with concrete variables and use its log-density in the objective making the gradient estimates biased with respect to the original objective (based on discrete variables), but unbiased with respect to the relaxation. 
+\citet{JangEtAl2017:GumbelSoftmax} instead use the argmax in the forward pass and the relaxation in the backward pass ignoring its density in the objective. This results in a technique similar to \emph{straight-through} \citep{BengioEtAl2013:ST} whose downside is that the objective being optimised is unknown. \citet{BalogEtAl2017:Gumbel} used the results above to produce an efficient sequential sampler for undirected graphical models. They also prove a whole family of reparameterisation tricks by changing the function $g(y)$ in the formulation above. 
+
+
+\bibliographystyle{apalike}
+
+\bibliography{concrete.bib}
+
+\end{document}  
