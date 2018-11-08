@@ -1,0 +1,41 @@
+% Headers
+\newcommand{\reftab}[1]{Table~\ref{tab:#1}}
+\newcommand{\refeq}[1]{Equation~\ref{eq:#1}}
+\newcommand{\reffig}[1]{Figure~\ref{fig:#1}}
+\newcommand{\refalg}[1]{Algorithm~\ref{alg:#1}}
+\newcommand{\refsec}[1]{Section~\ref{sec:#1}}
+
+% Objectives
+\DeclareMathOperator{\ELBO}{ELBO}
+% Divergences
+\DeclareMathOperator{\KL}{KL}
+% Linear algebra
+\DeclareMathOperator{\diag}{diag}
+% NN layers
+\DeclareMathOperator*{\onehot}{one-hot}
+\DeclareMathOperator*{\emb}{emb}
+\DeclareMathOperator*{\rnn}{rnn}
+\DeclareMathOperator*{\birnn}{birnn}
+\DeclareMathOperator*{\affine}{affine}
+% Activations
+\DeclareMathOperator*{\softmax}{softmax}
+\DeclareMathOperator*{\softplus}{softplus}
+\DeclareMathOperator*{\sigmoid}{sigmoid}
+\DeclareMathOperator*{\hardsigmoid}{hardsigmoid}
+% Decisions
+\DeclareMathOperator*{\argmax}{\arg\,\max}
+\DeclareMathOperator*{\argmin}{\arg\,\min}
+% Probabilities
+\DeclareMathOperator*{\BigP}{Pr}
+\DeclareMathOperator*{\Cat}{Cat}
+\DeclareMathOperator*{\Poisson}{Poisson}
+\DeclareMathOperator*{\Bern}{Bern}
+\DeclareMathOperator*{\Kuma}{Kuma}
+\DeclareMathOperator*{\HKuma}{HardKuma}
+\newcommand{\Prob}[1]{\ensuremath{\BigP\{{#1}\}}}
+
+% Language codes
+\newcommand{\Lx}{\texttt{L1}\xspace}
+\newcommand{\Ly}{\texttt{L2}\xspace}
+
+

@@ -1,0 +1,50 @@
+\section{Normalising flows}
+
+We can define a rich density by transforming a random variable sampled from a base distribution, for which we have a closed-form pdf, using an invertible transformation. We can then use rule (\ref{eq:change-of-density-d}) to obtain a density for the transformed variable. This is what we call a \emph{normalising flow}, where we call \emph{flow} the transformation itself. 
+
+A normalising flow is nothing but application of rule (\ref{eq:change-of-density-d}), which I repeat here for a density $p_Z(z)$ where $z = s(\gamma)$ for some $\gamma \sim \tau(\cdot)$, and $s$ is invertible.\footnote{In this section I will drop the subscript to reduce clutter, and to avoid confusion I will use different letters for different densities, for example, $p$ for $p_Z$ and $q$ for $q_Z$.}
+\begin{subequations}\label{eq:prior-nf}
+\begin{align}
+p(z) &= \tau(\gamma = \inv{s}(z)) \djac{\inv{s}}{z} \\
+p(z = s(\gamma)) &= \tau(\gamma) \djac{s}{\gamma}^{-1}
+\end{align}
+\end{subequations}
+
+\subsection{Variational inference with normalising flows}
+
+In this section I will assume a generative model 
+\begin{equation}
+    p(x, z) = p(z)p(x|z)
+\end{equation}
+for which we assume an intractable posterior $p(z|x)$.
+We then approximate this intractable posterior by a proxy density $q(z)$ in the framework of variational inference.
+
+We let our prior be a normalising flow (\ref{eq:prior-nf}) and similarly design a posterior normalising flow:
+\begin{subequations}
+\begin{align}
+q(z) &= \pi(\epsilon = \inv{t}(z)) \djac{\inv{t}}{z} \\
+q(z = t(\epsilon)) &= \pi(\epsilon) \djac{t}{\epsilon}^{-1} ~.
+\end{align}
+\end{subequations}
+
+In variational inference we optimise a variational lowerbound knowns as ELBO, here we obtain an expression for the ELBO as expectations wrt to the base distribution of the posterior flow.
+We start from the definition of the ELBO
+\begin{subequations}
+\begin{align}
+    & \mathbb E_{q(z)}\left[ \log \frac{p(x,z)}{q(z)} \right] \\
+    &= \int q(z) \log \frac{p(x|z)p(z)}{q(z)} \dd z \\
+    \intertext{where we have simply factorised the joint distribution}
+    &= \int \pi(\epsilon = \inv{t}(z)) \djac{\inv{t}}{z} \log \frac{p(x|z)p(z)}{\pi(\epsilon = \inv{t}(z)) \djac{\inv{t}}{z}} \dd z \\
+    \intertext{here we expressed the posterior flow in terms of its base distribution, but note we have not yet changed the variable of integration}
+    &= \int \pi(\epsilon) \djac{t}{\epsilon}^{-1} \log \frac{p(x|z=t(\epsilon))p(z=t(\epsilon))}{\pi(\epsilon = \inv{t}(z)) \djac{t}{\epsilon}^{-1}} \djac{t}{\epsilon} \dd \epsilon \\
+    \intertext{here we performed a change of variable expressing the integral wrt $\epsilon$}
+    &=  \int \pi(\epsilon) \log \frac{p(x|z=t(\epsilon))p(z=t(\epsilon))}{\pi(\epsilon) \djac{t}{\epsilon}^{-1}} \dd \epsilon  \\ 
+    \intertext{note that some of the Jacobians cancel out}
+    &=  \int \pi(\epsilon) \log \frac{p(x|z=t(\epsilon))\tau(\gamma =\inv{s}(t(\epsilon))\djac{\inv{s}}{t(\epsilon)} }{\pi(\epsilon) \djac{t}{\epsilon}^{-1}} \dd \epsilon \label{eq:enough}\\
+    \intertext{we now expressed the prior flow in terms of its base distribution}
+    &= \mathbb E_{\pi(\epsilon)}\left[ \log p(x|z=t(\epsilon))\right] + \mathbb H(\pi(\epsilon)) \\
+    &+ \mathbb E_{\pi(\epsilon)}\left[ \log \tau(\gamma = \inv{s}(t(\epsilon))) \right] + \mathbb E_{\pi(\epsilon)}\left[ \log \frac{\djac{\inv{s}}{t(\epsilon)}}{\djac{t}{\epsilon}^{-1}} \right]
+\end{align}
+\end{subequations}
+and after separating a few terms out we identify a convenient expression where some terms may even be available in closed-form (e.g. the entropy of the posterior flow's base distribution).
+Note that to estimate (\ref{eq:enough}) we need to assess $z$, sampled from the posterior normalising flow, under the prior normalising flow. As we have two different flows, and as we are sampling from the posterior base distribution, we need to first find the posterior sample $z = t(\epsilon)$, then find the prior sample $\gamma = \inv{s}(z) = \inv{s}(t(\epsilon))$, finally with that $\gamma$, we can compute the determinant of the Jacobian of the inverse prior flow $\inv{s}$ and evaluate it at the prior sample $\gamma$. 

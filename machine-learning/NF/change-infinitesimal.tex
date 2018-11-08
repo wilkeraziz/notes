@@ -1,0 +1,21 @@
+
+\section{Change of infinitesimal volume}
+
+I will only discuss the scalar case. Let $z \in \mathbb R$ and $z = t(h)$ for $h \in \mathbb R$, then
+\begin{equation}
+    \dv{a}{b} = \dv{t(b)}{b}
+\end{equation}
+and therefore
+\begin{equation}
+    \dd a = \dv{t(b)}{b} \dd b
+\end{equation}
+where $\dv{t(b)}{b}$ is the determinant of the Jacobian of the scalar transformation. 
+All we really need is to scale the volume (the direction does not matter), thus we use the absolute value
+\begin{equation}
+    \dd a = \abs{\dv{t(b)}{b}} \dd b ~.
+\end{equation}
+I know I am being very informal here, but this ``rule'' should help you throughout. 
+Then in high dimensions it becomes
+\begin{equation}
+    \dd x = \djac{t}{y} \dd y ~.
+\end{equation}

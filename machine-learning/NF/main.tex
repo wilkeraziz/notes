@@ -1,0 +1,66 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amssymb,amsfonts,latexsym,dsfont,xspace}
+\usepackage{physics,nicefrac}
+\usepackage{natbib}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\definecolor{darkblue}{rgb}{0, 0, 0.5}
+\hypersetup{colorlinks=true,citecolor=darkblue, linkcolor=darkblue, urlcolor=darkblue}
+\usepackage{microtype}      % microtypography
+\usepackage{pgf}
+\usepackage{apalike}
+\setcounter{tocdepth}{3}
+\usepackage{graphicx}
+\usepackage{color}
+\usepackage{paralist}
+\usepackage{tikz}
+\usepackage{subcaption}
+\usetikzlibrary{bayesnet}
+\usepackage{comment}
+
+\input{macros}
+
+\newcommand{\inv}[1]{{#1}^{-1}}
+\newcommand{\jac}[2]{J_{#1}(#2)}
+\newcommand{\djac}[2]{\left| \det \jac{#1}{#2} \right|}
+
+\title{Normalising Flows}
+
+\author{Wilker Aziz}
+
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+    In this note I will present normalising flows and a convenient expression for the ELBO in the general case where both the prior and the posterior approximation are expressed as normalising flows. For that, I first revisit the density of a transformed random variable.
+\end{abstract}
+\tableofcontents
+
+
+
+\section*{Notation}
+
+\paragraph{Abbreviations} 
+\begin{itemize}
+    \item random variable (rv)
+    \item probability density function (pdf)
+    \item probability mass function (pmf)
+    \item cumulative density function (cdf)
+\end{itemize}
+
+\paragraph{Jacobians} For some vector valued function $t: \mathbb R^d \to \mathbb R^d$, let $\pdv{t(a)}{a}$ be the matrix $J$ of partial derivatives where $J_{ij} = \pdv{t_i(a)}{a_j}$.
+This matrix is also called \emph{the Jacobian} and we sometimes denote it $\jac{t}{a}$.
+
+\pagebreak
+
+\input{change-density}
+\input{change-infinitesimal.tex}
+\input{nf.tex}
+
+
+\bibliographystyle{apalike}
+\bibliography{BIB}
+
+\end{document}

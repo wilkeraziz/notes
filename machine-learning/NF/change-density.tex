@@ -1,0 +1,77 @@
+\section{Density of transformed variable}
+
+For rvs $X$ and $Y$ taking on values in $\mathbb R^d$ and an invertible and differentiable transformation $h$ such that $x = h(y)$, it holds that
+\begin{align}\label{eq:change-of-density-d}
+    f_X(x) &= f_Y(y=\inv{h}(x))\djac{\inv{h}}{x}  \\
+    f_X(x=t(y)) &= f_Y(y)\djac{h}{y}^{-1}
+\end{align}
+however, in this section I will only derive these identities for the scalar case.
+
+~
+
+Let $A$ and $B$ be rvs taking on values in $\mathbb R$. And let $t: \mathbb R \to \mathbb R$ be an invertible and differentiable transformation such that $a = t(b)$.
+
+%\paragraph{Fact} For an invertible mapping
+%\begin{equation}
+%    A \mapsto \Prob{t(B) \in A} = \Prob{B \in \inv{t}(A)}
+%\end{equation}
+
+As $t$ is invertible, it is either increasing or decreasing in its domain. 
+
+\paragraph{Increasing} Let's first deal with the case where $t$ is increasing. Then
+\begin{subequations}
+\begin{align}
+    F_A(a) &= \Prob{A \le a} \\
+    \intertext{is the definition of $A$'s cdf}
+    &= \Prob{t(B) \le a} \\
+    \intertext{where we use the fact that $A = t(B)$}
+    &= \Prob{B \le \inv{t}(a)} \\
+    \intertext{here it is essential that $t$ be increasing and invertible}
+    &= F_B(\inv{t}(a)) \label{eq:cdf_inc}
+\end{align}
+\end{subequations}
+and finally we realise that we can express $F_A$ in terms of $F_B$.
+
+Applying the definition of pdfs we obtain
+\begin{subequations}
+\begin{align}
+    f_A(a) &= F'_A(a)  \\
+    &= \left(F_B(\inv{t}(a))\right)' \\
+    \intertext{where we made use of the result in (\ref{eq:cdf_inc})}
+    &= F'_B(\inv{t}(a))\dv{\inv{t}(a)}{a} \\
+    \intertext{which follows by application of the chain rule of derivatives} 
+    &= f_B(\inv{t}(a))\dv{\inv{t}(a)}{a} \label{eq:change_inc}
+\end{align}
+\end{subequations}
+where again we applied the definition of pdfs.
+
+\paragraph{Decreasing} Where $t$ is decreasing things change slightly,
+\begin{subequations}
+\begin{align}
+    F_A(a) &= \Prob{A \le a} \\
+    &= \Prob{t(B) \le a} \\
+    &= \Prob{B \ge \inv{t}(a)} 
+    \intertext{here it is essential that $t$ be decreasing and invertible}
+    &= 1 - F_B(\inv{t}(a)) \label{eq:cdf_dec}
+\end{align}
+\end{subequations}
+
+Applying the definition of pdfs we obtain
+\begin{subequations}
+\begin{align}
+    f_A(a) &= F'_A(a)  \\
+    &= \left(1 - F_B(\inv{t}(a))\right)' \\
+    \intertext{where we made use of the result in (\ref{eq:cdf_dec})}
+    &= -F'_B(\inv{t}(a))\dv{\inv{t}(a)}{a} \\
+    &= -f_B(\inv{t}(a))\dv{\inv{t}(a)}{a} \label{eq:change_dec}
+\end{align}
+\end{subequations}
+
+\paragraph{A general rule} Combining both results (\ref{eq:change_inc}) and (\ref{eq:change_dec}), we have 
+\begin{equation}
+    f_A(a) = f_B(\inv{t}(a))\abs{\dv{\inv{t}(a)}{a}}
+\end{equation}
+which can also be written 
+\begin{equation}
+    f_A(a=t(b)) = f_B(b)\abs{\dv{t(b)}{a}}^{-1} ~.
+\end{equation}
