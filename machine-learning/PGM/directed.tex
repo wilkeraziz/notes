@@ -170,7 +170,7 @@ Given a BN $\mathfrak G$, the joint probability $P_{X_1, \ldots, X_n}(x_1, \ldot
 \begin{align}\label{eq:BN-chain-rule}
 P_{X_1, \ldots, X_n}(x_1, \ldots, x_n) &= \prod_{i=1}^n P(X=x_i|\Pa_{X_i}=\pa_{X_i}) 
 \end{align}
-where $\Pa_{X_i}$ denotes the set of parents of $X_i$ in $\mathfrak G$ and $\pa_{X_i}$ are assignments to those parents. This result also implies that $\mathbf X \perp \text{NonDescendants}_{\mathbf X} \mid \Pa_{\mathbf X}$ where $\mathbf X$ is any subset of the variables in the BN, $\Pa_{\mathbf X}$ the union of their parents, and $\Pa_{\mathbf X}$ the union of variables that do not descend from variables in $\mathbf X$.
+where $\Pa_{X_i}$ denotes the set of parents of $X_i$ in $\mathfrak G$ and $\pa_{X_i}$ are assignments to those parents. This result also implies that $\mathbf X \perp \text{NonDescendants}_{\mathbf X} \mid \Pa_{\mathbf X}$ where $\mathbf X$ is any subset of the variables in the BN, $\Pa_{\mathbf X}$ the union of their parents, and $\text{NonDescendants}_{\mathbf X}$ the union of variables that do not descend from variables in $\mathbf X$.
 %it states that the joint distribution over $X_1, \ldots, X_n$ factorises as shown on the right-hand side. Each 
 
 Now with definition (\ref{eq:BN-chain-rule}) in mind, let's get back to the BNs in Figure (\ref{fig:BN}).
@@ -213,7 +213,7 @@ $P_{C|AB}$ & $n \times m \times 2$ & $O(n \times m)$
 \subsection{Inferences}	
 
 Equation (\ref{eq:BN-chain-rule}) shows us how to construct the joint distribution out of the cpds specified in a BN.
-However, we may be interested in other quantities as well, such as marginals and conditionals that are not directly stored in cds. 
+However, we may be interested in other quantities as well, such as marginals and conditionals that are not directly stored in cpds. 
 For that, we start from the joint distribution---taking into account the particular factorisation---and proceed by applying standard rules of probability, such as, marginalisation, conditioning, and Bayes rule. 
 
 For example, the BN in Figure \ref{fig:BN} (left) implies that we only have $P_A$, $P_{C|A}$, and $P_{B|C}$ stored as tabular cpds. However, we may be interested in computing the marginal distribution $P_B$, or the marginal $P_C$, or a conditional such as $P_{A|B}$ or $P_{B|A}$.
